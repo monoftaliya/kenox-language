@@ -1,7 +1,7 @@
 //! `cargo test` runs these checks on the whole repository.
 //! Full report with metrics: `cargo run -p kenox-repo-check`.
 
-use kenox_repo_check::{cexamples, corpus, docs, repo_root};
+use kenox_repo_check::{cexamples, corpus, docs, repo_root, spec};
 
 fn assert_clean(what: &str, problems: &[String]) {
     assert!(
@@ -15,6 +15,11 @@ fn assert_clean(what: &str, problems: &[String]) {
 #[test]
 fn documents_are_consistent() {
     assert_clean("Документы", &docs::check(&repo_root()));
+}
+
+#[test]
+fn specification_is_consistent() {
+    assert_clean("Спецификация", &spec::check(&repo_root()));
 }
 
 #[test]

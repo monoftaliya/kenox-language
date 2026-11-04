@@ -1,5 +1,5 @@
-//! Repository checks for KENOX: design documents, the example corpus and the C
-//! sources of the FFI examples.
+//! Repository checks for KENOX: design documents, the language specification,
+//! the example corpus and the C sources of the FFI examples.
 //!
 //! Every check returns human-readable problems (in Russian, for the user); an
 //! empty list means the check passed. `cargo test` runs all checks
@@ -12,6 +12,7 @@
 pub mod cexamples;
 pub mod corpus;
 pub mod docs;
+pub mod spec;
 mod text;
 
 use std::path::{Path, PathBuf};

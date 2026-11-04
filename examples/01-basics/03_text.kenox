@@ -26,5 +26,5 @@ fun main() {
         """
     // ⚠ Р-6: в JSON-подобном тексте скобки приходится удваивать; для шаблонов JSON — сырые строки
     println(path)
-    println(json.trimIndent())
+    println(json)                                        // отступ убран при компиляции (Q-44)
 }

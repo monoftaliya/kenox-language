@@ -13,6 +13,7 @@ KENOX — язык программирования на этапе проект
 | Решения | [docs/ADR/](docs/ADR/README.md) |
 | План и критерии этапов | [docs/ROADMAP.md](docs/ROADMAP.md) |
 | Открытые вопросы | [docs/OPEN_QUESTIONS.md](docs/OPEN_QUESTIONS.md) |
+| Спецификация ядра (нормативная) | [spec/](spec/README.md) |
 | Синтаксис | [docs/SYNTAX_SKETCH.md](docs/SYNTAX_SKETCH.md), корпус — [examples/](examples/README.md) |
 | Порядок работы с Git, CI и проверкой | [docs/WORKFLOW.md](docs/WORKFLOW.md) |
 
@@ -40,6 +41,7 @@ KENOX — язык программирования на этапе проект
 - Каждый pull request обновляет [STATUS.md](STATUS.md).
 - Связанное меняется вместе: изменение синтаксиса правит эскиз, примеры и CORPUS_REVIEW.md в одном pull request; новое решение — ADR, его строку в `docs/ADR/README.md` и статус в ARCHITECTURE.md.
 - Нумерация без пропусков: Q-NN (OPEN_QUESTIONS.md), Р-N (CORPUS_REVIEW.md, буква кириллическая), E-N, ADR-NNNN. `cargo test` это проверяет.
+- Спецификация ([ADR-0025](docs/ADR/0025-specification-format.md)): правило — абзац с идентификатором `**[глава.тема.правило]**`; примеры ✗ — закомментированные строки `// ✗ [id] код — пояснение`; грамматика — в блоках `ebnf`. Изменение спецификации идёт вместе с изменением эскиза и примеров.
 
 ## Соглашения
 
