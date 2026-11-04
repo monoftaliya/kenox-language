@@ -1,0 +1,21 @@
+// Пример 11-01 (пакет inventory). Модули и импорт: точка входа
+// Проверяет: модуль = файл, импорт из своего пакета и из зависимости,
+// видимость по умолчанию (внутри пакета), pub и private.
+
+import model.item.Item                // src/model/item.kenox
+import model.stock.Stock              // src/model/stock.kenox
+import report                         // src/report.kenox — модуль целиком, по имени
+import textstats.wordCount            // зависимость из kenox.toml (реэкспорт библиотеки)
+
+fun main() {
+    var stock = Stock.new()
+    stock.add(Item.new("болт М6", 120))
+    stock.add(Item.new("гайка М6", 80))
+    stock.remove("гайка М6", 30)
+
+    val text = report.render(stock)
+    println(text)
+    println("слов в отчёте: {wordCount(text)}")
+    // ✗ val trail = Item.new("шайба", 1).auditTrail
+    //   ошибка: поле auditTrail объявлено private — оно видно только в файле model/item.kenox
+}

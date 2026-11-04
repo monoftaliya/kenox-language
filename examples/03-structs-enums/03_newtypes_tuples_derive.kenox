@@ -1,0 +1,47 @@
+// Пример 03-03. Типы-обёртки, кортежи, автоматические реализации
+// Проверяет: struct с безымянным полем, кортежи и их разбор, @derive,
+// сравнение по значению, явное клонирование не-Copy типов.
+
+@derive(Copy, Eq, Hash, Order, Show)
+struct UserId(Int)
+
+@derive(Copy, Eq, Show)
+struct Meters(Float64)
+
+@derive(Clone, Eq, Show)
+struct User {
+    id: UserId
+    name: String
+}
+
+fun minMax(values: Slice<Int>): (Int, Int)? {
+    if values.isEmpty() { return null }
+    var lo = values[0]                   // Int — Copy: элемент копируется
+    var hi = values[0]
+    for v in values {
+        if v < lo { lo = v }
+        if v > hi { hi = v }
+    }
+    return (lo, hi)
+}
+
+fun main() {
+    val a = UserId(42)
+    val b = UserId(42)
+    println(a == b)                      // true — сравнение по значению
+    println(a.0 + 1)                     // доступ к безымянному полю
+
+    // ✗ val wrong: UserId = 42
+    //   ошибка: Int и UserId — разные типы; обёртка защищает от путаницы идентификаторов
+
+    val distance = Meters(12.5)
+    println(distance)                    // Meters(12.5) — Show сгенерирован
+
+    val anna = User(id = a, name = "Анна")
+    val copy = anna.clone()              // User не Copy: копия только явная
+    println(anna == copy)
+
+    if val (lo, hi) = minMax([4, 9, 1, 7]) {
+        println("от {lo} до {hi}")
+    }
+}

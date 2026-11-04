@@ -1,0 +1,56 @@
+// Пример 09-04. RAII: детерминированное освобождение ресурсов
+// Проверяет: Drop, обратный порядок уничтожения, явное закрытие с ошибкой,
+// освобождение при раннем выходе через try.
+
+import std.fs
+import std.fs.Path
+import std.time.Instant
+
+struct Timer {
+    label: String
+    started: Instant
+
+    fun start(label: str): Timer = Timer(label = label.toString(), started = Instant.now())
+}
+
+extend Timer: Drop {
+    fun drop(inout self) {
+        println("{self.label}: {self.started.elapsed()}")
+    }
+}
+
+struct TempFile {
+    path: Path
+
+    fun create(name: str): Result<TempFile, fs.IoError> {
+        val path = fs.tempDir().join(name)
+        try fs.writeText(path, "")
+        return Ok(TempFile(path = path))
+    }
+}
+
+extend TempFile: Drop {
+    fun drop(inout self) {
+        fs.remove(self.path).ignoreError()       // деструктор не может вернуть ошибку — отказ явный
+    }
+}
+
+fun process(): Result<Unit, fs.IoError> {
+    val timer = Timer.start("process")
+    val tmp = try TempFile.create("kenox-demo.txt")
+    var out = try fs.File.create(tmp.path)       // write меняет буфер файла — нужна var
+    try out.write("промежуточные данные\n")
+    try out.close()                              // явное закрытие: ошибка сброса буфера не теряется
+    // ✗ try out.write("ещё")
+    //   ошибка: `out` перемещена в close (метод принимает consume self)
+    return Ok()
+}   // здесь в обратном порядке: удаляется временный файл, затем печатается время
+
+fun main() {
+    match process() {
+        .Ok(_) -> println("готово")
+        .Err(e) -> eprintln("ошибка: {e}")
+    }
+    // Деструкторы вызываются и при раннем выходе через try. Исключение — утечки
+    // (циклы Shared), поэтому корректность программы не должна держаться только на Drop.
+}

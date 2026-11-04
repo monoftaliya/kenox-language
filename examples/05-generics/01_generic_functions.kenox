@@ -1,0 +1,42 @@
+// Пример 05-01. Обобщённые функции
+// Проверяет: ограничения трейтами, where, вывод типов-аргументов,
+// результат-заимствование `ref T`, запрет заимствования у временного значения.
+
+fun largest<T: Order>(items: Slice<T>): ref T? {    // результат заимствует элемент items
+    var best: ref T? = null
+    for item in items {
+        if best == null || item > best.unwrap() { best = item }
+    }
+    return best
+    // ⚠ Р-12: без пометки `ref` непонятно, копия это или заимствование; T может быть
+    //   не-Copy типом, поэтому заимствование нужно отметить в типе результата
+}
+
+fun countWhere<T>(items: Slice<T>, predicate: (T) -> Bool): Int {
+    var n = 0
+    for item in items {
+        if predicate(item) { n += 1 }
+    }
+    return n
+}
+
+fun joinAll<T>(items: Slice<T>, separator: str): String where T: Show {
+    var out = String()
+    for (i, item) in items.enumerate() {
+        if i > 0 { out.push(separator) }
+        out.push("{item}")
+    }
+    return out
+}
+
+fun main() {
+    val scores = [72, 95, 88]
+    println(largest(scores))                          // 95
+    println(largest(["груша", "яблоко", "айва"]))      // заимствование живёт до конца строки
+    println(countWhere(scores) { it >= 80 })          // 2
+    println(joinAll(scores, ", "))                    // 72, 95, 88
+
+    // ✗ val top = largest([1, 2, 3])
+    // ✗ println(top)
+    //   ошибка: результат заимствует временный список, который уничтожается в конце строки
+}

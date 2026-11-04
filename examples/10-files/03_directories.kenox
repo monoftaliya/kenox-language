@@ -1,0 +1,31 @@
+// Пример 10-03. Каталоги и метаданные
+// Проверяет: рекурсивный обход, фильтрацию по расширению, размеры файлов,
+// сортировку и форматированный вывод.
+
+import std.fs
+import std.fs.{Path, WalkOptions}
+
+@derive(Show)
+struct Entry {
+    path: Path
+    size: Int
+}
+
+fun largestFiles(root: Path, ext: str, limit: Int): Result<List<Entry>, fs.IoError> {
+    var found: List<Entry> = []
+    for item in fs.walk(root, WalkOptions(followLinks = false)) {
+        val entry = try item
+        if !entry.isFile() || entry.path().extension() != ext { continue }
+        found.push(Entry(path = entry.path().clone(), size = try entry.metadata().size()))
+    }
+    found.sortBy { -it.size }
+    found.truncate(limit)
+    return Ok(found)
+}
+
+fun main() {
+    match largestFiles(Path.of("."), "kenox", 5) {
+        .Ok(entries) -> for e in entries { println("{e.size:>10} {e.path}") }
+        .Err(e) -> eprintln("ошибка обхода: {e}")
+    }
+}

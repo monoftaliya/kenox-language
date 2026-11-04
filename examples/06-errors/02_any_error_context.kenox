@@ -1,0 +1,36 @@
+// Пример 06-02. Ошибки в приложении: AnyError и контекст
+// Проверяет: универсальный тип ошибки, добавление контекста, смешение ошибок
+// разных типов в одной функции, main с результатом.
+
+import std.fs
+import std.env
+import std.error.AnyError
+
+fun countLines(path: str): Result<Int, AnyError> {
+    val text = try fs.readText(path).context("не удалось прочитать {path}")
+    return Ok(text.lines().count())
+}
+
+fun parseLimit(raw: str): Result<Int, AnyError> {
+    val n = try raw.parseInt().context("лимит «{raw}» — не число")
+    if n <= 0 {
+        return Err(AnyError.msg("лимит должен быть положительным, получено {n}"))
+    }
+    return Ok(n)
+}
+
+fun main(): Result<Unit, AnyError> {
+    val args = env.args()
+    val path = args.get(1) ?: return Err(AnyError.msg("укажите путь к файлу"))
+    val limit = try parseLimit(args.get(2) ?: "100")
+    // ⚠ Р-15: слева — заимствование элемента args, справа — литерал String.
+    //   Общий тип ветвей здесь — представление str; это правило нужно записать в спецификацию
+    val lines = try countLines(path)
+    if lines > limit {
+        println("файл длиннее лимита: {lines} > {limit}")
+    }
+    return Ok()
+}
+// Если main возвращает Err, программа печатает цепочку контекста и завершается с кодом 1:
+//   ошибка: не удалось прочитать notes.txt
+//   причина: файл не найден

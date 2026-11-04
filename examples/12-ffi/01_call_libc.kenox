@@ -1,0 +1,34 @@
+// Пример 12-01. Вызов функций C
+// Проверяет: объявления extern "C", C-типы, строки C, unsafe на границе,
+// безопасную обёртку вокруг небезопасного вызова.
+
+import std.ffi.{CChar, CInt, CSize, CStr, CString, withCString}
+
+extern "C" {
+    fun strlen(s: RawPtr<CChar>): CSize
+    fun getenv(name: RawPtr<CChar>): RawPtr<CChar>      // может вернуть NULL
+    fun abs(x: CInt): CInt
+}
+
+// Безопасная обёртка: unsafe-код в одном месте, наружу — обычный API.
+fun envVar(name: str): String? = withCString(name) { p ->
+    val raw = unsafe { getenv(p) }
+    if raw.isNull() { null } else { unsafe { CStr.fromPtr(raw) }.toStringLossy() }
+}
+
+fun main() {
+    println(unsafe { abs(-42) })                        // 42
+
+    val owned = CString.from("привет")                  // копия с нулём в конце
+    val n = unsafe { strlen(owned.ptr()) }              // 12 — байты UTF-8, а не символы
+    println(n)
+
+    println(envVar("PATH") ?: "PATH не задан")
+
+    // ⚠ Р-23: следующие две строки сейчас скомпилируются и дадут висячий указатель:
+    //     val p = CString.from("временная").ptr()     // CString уничтожается в конце строки
+    //     unsafe { strlen(p) }                        // неопределённое поведение
+    //   Сырой указатель — не заимствование, компилятор не связывает его с CString.
+    //   Предложение: ptr() возвращает невыходящее представление, привязанное к CString,
+    //   а для простых случаев — withCString { p -> … }. Тогда это станет ошибкой компиляции
+}

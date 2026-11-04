@@ -1,0 +1,30 @@
+// Пример 10-02. Построчная обработка и буферизация
+// Проверяет: потоковое чтение больших файлов, буферизованную запись,
+// явное закрытие с проверкой ошибки, ошибки чтения посреди файла.
+
+import std.fs
+import std.io.{BufReader, BufWriter}
+import std.error.AnyError
+
+fun filterLog(input: str, output: str, level: str): Result<Int, AnyError> {
+    val reader = BufReader(try fs.File.open(input))
+    var writer = BufWriter(try fs.File.create(output))
+    var kept = 0
+    for line in reader.lines() {                 // каждая строка — Result: ошибка может случиться посреди файла
+        val text = try line.context("чтение {input}")
+        if text.contains(level) {
+            try writer.writeLine(text)
+            kept += 1
+        }
+    }
+    try writer.close()                           // сброс буфера: ошибка записи не потеряется
+    // ⚠ Р-22: если забыть close(), деструктор сбросит буфер, но ошибку проглотит.
+    //   Нужно предупреждение компилятора о незакрытом ресурсе (Q-22)
+    return Ok(kept)
+}
+
+fun main(): Result<Unit, AnyError> {
+    val n = try filterLog("app.log", "errors.log", "ERROR")
+    println("найдено строк с ошибками: {n}")
+    return Ok()
+}

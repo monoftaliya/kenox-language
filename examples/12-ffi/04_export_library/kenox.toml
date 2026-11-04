@@ -1,0 +1,10 @@
+# Пример 12-04: динамическая библиотека с C ABI для использования из других программ
+
+[package]
+name = "counter"
+version = "0.1.0"
+kind = "dylib"                            # или staticlib
+
+[ffi]
+header = "include/counter.h"              # сгенерировать C-заголовок
+api-description = "counter.api.json"      # машиночитаемое описание API (ADR-0013)

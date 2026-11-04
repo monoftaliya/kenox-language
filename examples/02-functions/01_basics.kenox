@@ -1,0 +1,35 @@
+// Пример 02-01. Функции
+// Проверяет: функции-выражения, значения по умолчанию, именованные аргументы,
+// рекурсию, функции без результата и тип Never.
+
+fun square(x: Int): Int = x * x
+
+fun clamp(value: Int, min: Int = 0, max: Int = 100): Int =
+    if value < min { min } else if value > max { max } else { value }
+
+fun factorial(n: Int): Int = if n <= 1 { 1 } else { n * factorial(n - 1) }
+
+fun describe(name: str, age: Int, city: str = "не указан") {
+    println("{name}, {age} лет, город: {city}")
+}
+
+fun parity(n: Int): String = if n % 2 == 0 { "чётное" } else { "нечётное" }
+
+fun fail(message: str): Never {
+    panic("непоправимая ошибка: {message}")
+}
+
+fun main() {
+    println(square(7))
+    println(clamp(150))                         // 100
+    println(clamp(-5, max = 10))                // 0
+    println(factorial(10))
+    describe("Анна", 31)
+    describe(name = "Борис", age = 27, city = "Пермь")
+    println(parity(42))
+    if square(3) != 9 {
+        fail("арифметика сломалась")            // Never совместим с любым ожидаемым типом
+    }
+    // ✗ describe("Анна")
+    //   ошибка: не хватает аргумента `age` — значения по умолчанию у него нет
+}

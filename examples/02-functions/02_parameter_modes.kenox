@@ -1,0 +1,39 @@
+// Пример 02-02. Режимы параметров: заимствование, inout, consume
+// Проверяет: что видно на месте вызова, а что нет; требование var для изменения.
+
+struct Account {
+    owner: String
+    balance: Int
+}
+
+fun report(account: Account) {                       // неизменяемое заимствование (по умолчанию)
+    println("{account.owner}: {account.balance}")
+}
+
+fun deposit(inout account: Account, amount: Int) {   // исключительное изменяемое заимствование
+    account.balance += amount
+}
+
+fun close(consume account: Account): Int {           // передача владения
+    println("счёт {account.owner} закрыт")
+    return account.balance
+}                                                     // здесь `account` уничтожается
+
+fun main() {
+    var acc = Account(owner = "Анна", balance = 100)
+    report(acc)                         // заимствование: acc доступна и после вызова
+    deposit(&acc, 50)                   // `&` — видно, что аргумент изменяется
+    report(acc)
+
+    val frozen = Account(owner = "Борис", balance = 10)
+    // ✗ deposit(&frozen, 5)
+    //   ошибка: `frozen` объявлена через val, изменяемое заимствование требует var
+    report(frozen)
+
+    val rest = close(acc)               // владение передано в функцию
+    // ⚠ Р-3: на месте вызова не видно, что `acc` перемещена, — это видно только в сигнатуре.
+    //   Решено (Q-39): так и остаётся; при желании можно явно написать `close(consume acc)`
+    // ✗ report(acc)
+    //   ошибка: `acc` перемещена при вызове `close` строкой выше
+    println("остаток: {rest}")
+}

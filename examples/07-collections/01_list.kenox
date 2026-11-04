@@ -1,0 +1,44 @@
+// Пример 07-01. List и срезы
+// Проверяет: создание, добавление, сортировку, срезы, изменяемый обход,
+// явное заимствование элемента и защиту от изменения коллекции во время обхода.
+
+@derive(Clone, Show)
+struct Task {
+    title: String
+    priority: Int
+    done: Bool
+}
+
+fun main() {
+    var tasks: List<Task> = [
+        Task(title = "отчёт", priority = 2, done = false),
+        Task(title = "почта", priority = 1, done = true),
+        Task(title = "релиз", priority = 3, done = false),
+    ]
+    tasks.push(Task(title = "ревью", priority = 2, done = false))
+
+    tasks.sortBy { it.priority }                    // сортировка на месте
+    val top: Slice<Task> = tasks.slice(0..<2)       // представление без копирования
+    println(top.map { it.title }.toList())
+
+    for inout t in &tasks {                          // изменяемый обход
+        if t.priority >= 3 { t.done = true }
+    }
+
+    // ✗ for t in tasks { if t.done { tasks.push(t.clone()) } }
+    //   ошибка: `tasks` заимствована циклом; изменить её внутри цикла нельзя
+    //   (в Kotlin это ConcurrentModificationException во время выполнения)
+
+    tasks.retain { !it.done }
+    println("осталось: {tasks.len()}")
+
+    val first = ref tasks[0]                         // явное заимствование элемента
+    // ⚠ Р-16: без `ref` строка `val first = tasks[0]` — ошибка: элемент нельзя
+    //   переместить из списка. Компилятор подскажет: ref, clone() или removeAt
+    println(first.title)
+
+    val taken: Task = tasks.removeAt(0)              // владение элементом переходит к `taken`
+    // ✗ println(first.title)
+    //   ошибка: `first` заимствует tasks, а removeAt её изменила
+    println(taken)
+}

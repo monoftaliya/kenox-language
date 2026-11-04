@@ -1,0 +1,30 @@
+// Пример 08-03. Оператор is, if val, while val
+// Проверяет: проверку образца как логическое выражение с привязками,
+// распаковку T? и цикл с распаковкой.
+
+enum Shape {
+    Circle(r: Float64)
+    Square(side: Float64)
+}
+
+fun main() {
+    val s: Shape = .Circle(r = 2.0)
+    if s is .Circle(r) && r > 1.0 {          // привязка r видна справа от && и в теле
+        println("большой круг радиуса {r}")
+    }
+    val isSquare = s is .Square(_)
+    println(isSquare)                        // false
+
+    val names: List<String?> = ["Анна", null, "Борис"]
+    for n in names {
+        if val name = n { println("привет, {name}") } else { println("(пропуск)") }
+    }
+
+    var queue: List<Int> = [1, 2, 3]
+    while val job = queue.popFirst() {
+        println("задача {job}")
+    }
+
+    // ✗ if s is .Circle(r) || r > 1.0 { }
+    //   ошибка: при `||` образец мог не совпасть, привязки r может не существовать
+}

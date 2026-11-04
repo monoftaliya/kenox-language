@@ -1,0 +1,6 @@
+// Пример 11-02 (пакет textstats). Библиотека: корневой модуль и публичный API
+// Проверяет: что видно потребителю (только pub), реэкспорт, тесты рядом с кодом.
+
+pub import counting.{wordCount, stats, Stats}     // потребитель пишет textstats.wordCount
+
+pub fun version(): String = "0.1.0"

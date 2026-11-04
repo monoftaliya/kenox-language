@@ -1,0 +1,54 @@
+// Пример 09-08. Потоки без гонок данных
+// Проверяет: структурированные потоки с заимствованием, Shared<Mutex<T>>,
+// Send/Sync, каналы, параллельный итератор.
+
+import std.thread
+import std.thread.JoinHandle
+import std.sync.{Shared, Mutex, channel}
+import std.cell.Cell
+
+fun main() {
+    val numbers = List.generate(1_000_000) { it }
+
+    // 1. Структурированные потоки: дочерние потоки заимствуют данные родителя;
+    //    область гарантирует, что они завершатся раньше, чем numbers уничтожится.
+    val (left, right) = numbers.splitAt(numbers.len() / 2)
+    var leftSum = 0
+    var rightSum = 0
+    thread.scope { s ->
+        s.spawn { leftSum = left.sum() }        // у каждого потока — своя переменная
+        s.spawn { rightSum = right.sum() }
+        // ✗ s.spawn { leftSum += 1 }
+        //   ошибка: `leftSum` уже изменяемо заимствована первым потоком — это была бы гонка
+    }
+    println(leftSum + rightSum)                 // 499999500000
+
+    // 2. Общее изменяемое состояние — только через синхронизацию.
+    val hits = Shared(Mutex(0))
+    var handles: List<JoinHandle<Unit>> = []
+    for _ in 0..<4 {
+        val mine = hits.share()                  // отдельный владелец для каждого потока
+        handles.push(thread.spawn {              // выходящее замыкание: `mine` перемещается в поток
+            for _ in 0..<1000 { mine.lock { it += 1 } }
+        })
+    }
+    for handle in consume handles { handle.join() }
+    println(hits.lock { it })                    // 4000
+
+    val flag = Cell(false)
+    // ✗ thread.scope { s -> s.spawn { flag.set(true) } }
+    //   ошибка: Cell<Bool> не Sync — заимствовать её из другого потока нельзя
+    flag.set(true)
+
+    // 3. Каналы
+    val (tx, rx) = channel<String>()
+    val producer = thread.spawn {
+        for i in 1..=3 { tx.send("сообщение {i}") }
+    }                                            // tx перемещён в поток и закроется вместе с ним
+    for msg in rx { println(msg) }               // цикл закончится, когда канал закроется
+    producer.join()
+
+    // 4. Параллельный итератор для вычислений
+    val squares = numbers.parIter().map { it * it }.sum()
+    println(squares)
+}

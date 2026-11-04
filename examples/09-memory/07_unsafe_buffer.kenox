@@ -1,0 +1,49 @@
+// Пример 09-07. unsafe: ручная память под безопасным интерфейсом
+// Проверяет: сырые указатели, выделение через аллокатор, инварианты,
+// безопасную обёртку, которая не выпускает указатель наружу.
+
+import std.alloc.{Layout, systemAllocator}
+
+pub struct RingBuffer {
+    private data: RawMutPtr<Int>         // инвариант: capacity элементов, первые len — инициализированы
+    private capacity: Int
+    private head: Int
+    private len: Int
+
+    pub fun new(capacity: Int): RingBuffer {
+        assert(capacity > 0, "ёмкость должна быть положительной")
+        val data = unsafe { systemAllocator.alloc(Layout.array<Int>(capacity)).cast<Int>() }
+        return RingBuffer(data = data, capacity = capacity, head = 0, len = 0)
+    }
+
+    pub fun push(inout self, value: Int) {
+        val index = (self.head + self.len) % self.capacity
+        unsafe { self.data.offset(index).write(value) }      // index < capacity — по построению
+        if self.len < self.capacity {
+            self.len += 1
+        } else {
+            self.head = (self.head + 1) % self.capacity       // перезаписан самый старый элемент
+        }
+    }
+
+    pub fun get(self, i: Int): Int? {
+        if i < 0 || i >= self.len { return null }            // проверка — до unsafe
+        val index = (self.head + i) % self.capacity
+        return unsafe { self.data.offset(index).read() }
+    }
+}
+
+extend RingBuffer: Drop {
+    fun drop(inout self) {
+        unsafe { systemAllocator.free(self.data.cast(), Layout.array<Int>(self.capacity)) }
+    }
+}
+
+fun main() {
+    var ring = RingBuffer.new(3)
+    for x in 1..=5 { ring.push(x) }
+    println("{ring.get(0)} {ring.get(1)} {ring.get(2)} {ring.get(3)}")   // 3 4 5 null
+    // ✗ println(ring.data.read())
+    //   ошибка: чтение через сырой указатель возможно только внутри unsafe
+    // В другом файле не скомпилируется и `ring.data`: поле приватно.
+}

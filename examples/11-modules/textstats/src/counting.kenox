@@ -1,0 +1,22 @@
+// Модуль counting (пример 11-02)
+
+pub struct Stats {
+    pub words: Int
+    pub lines: Int
+    longestLine: Int        // без pub: потребитель поле не видит и не может создать Stats сам
+}
+
+pub fun wordCount(text: str): Int = text.splitWhitespace().count()
+
+pub fun stats(text: str): Stats = Stats(
+    words = wordCount(text),
+    lines = text.lines().count(),
+    longestLine = text.lines().map { it.chars().count() }.max() ?: 0,
+)
+
+@test
+fun countsWords() {
+    assert(wordCount("раз два  три") == 3)
+    assert(wordCount("") == 0)
+    assert(stats("а\nбб").longestLine == 2)
+}

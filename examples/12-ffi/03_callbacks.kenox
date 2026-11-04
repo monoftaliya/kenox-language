@@ -1,0 +1,32 @@
+// Пример 12-03. Обратные вызовы из C
+// Проверяет: указатели на функции с ABI C, qsort из libc, преобразование
+// размеров на границе, запрет раскрутки паники через кадры C.
+
+import std.ffi.{CInt, CSize, CVoid}
+
+extern "C" {
+    fun qsort(
+        base: RawMutPtr<CVoid>,
+        count: CSize,
+        size: CSize,
+        compare: extern "C" fun(RawPtr<CVoid>, RawPtr<CVoid>) -> CInt,
+    )
+}
+
+// Функция с ABI C: её можно передать в C как указатель.
+extern "C" fun compareDesc(a: RawPtr<CVoid>, b: RawPtr<CVoid>): CInt {
+    val x = unsafe { a.cast<Int32>().read() }
+    val y = unsafe { b.cast<Int32>().read() }
+    return if x < y { 1 } else if x > y { -1 } else { 0 }
+    // Если здесь случится паника, процесс аварийно завершится: раскрутка через кадры C запрещена
+}
+
+fun main() {
+    var values: List<Int32> = [5, 1, 4, 2, 3]
+    unsafe {
+        qsort(values.mutPtr().cast(), values.len().toUSize(), sizeOf<Int32>(), compareDesc)
+    }
+    println(values)                       // [5, 4, 3, 2, 1]
+    // Единственное преобразование Int → USize в корпусе — на границе с C (Р-25).
+    // Без unsafe то же самое: values.sortBy { -it }
+}

@@ -1,0 +1,61 @@
+// Пример 05-02. Обобщённые типы
+// Проверяет: обобщённую структуру с методами, методы только при ограничении (extend<T: …>),
+// обобщённое рекурсивное перечисление с изменением на месте.
+
+struct Stack<T> {
+    items: List<T>
+
+    fun new(): Stack<T> = Stack(items = [])
+    fun push(inout self, consume value: T) { self.items.push(value) }
+    fun pop(inout self): T? = self.items.pop()
+    fun peek(self): ref T? = self.items.last()
+    fun len(self): Int = self.items.len()
+}
+
+extend<T: Show> Stack<T> {                  // методы есть только у Stack<T>, где T: Show
+    fun dump(self) {
+        for item in self.items.reversed() { println("  {item}") }
+    }
+}
+
+enum Tree<T> {
+    Leaf
+    Node(left: Box<Tree<T>>, value: T, right: Box<Tree<T>>)
+
+    fun insert(inout self, consume value: T) where T: Order {
+        match self {                        // self — inout-место: привязки тоже inout
+            .Leaf -> self = .Node(left = Box(.Leaf), value = value, right = Box(.Leaf))
+            .Node(left, current, right) ->
+                if value < current { left.insert(value) } else { right.insert(value) }
+        }
+    }
+
+    fun collect(self, inout out: List<T>) where T: Clone {
+        if self is .Node(left, value, right) {
+            left.collect(&out)
+            out.push(value.clone())
+            right.collect(&out)
+        }
+    }
+}
+
+fun main() {
+    var stack: Stack<String> = Stack.new()
+    stack.push("первый")
+    stack.push("второй")
+    println(stack.peek())                   // второй
+    stack.dump()
+    println(stack.pop())                    // второй
+    println(stack.len())                    // 1
+
+    var tree: Tree<Int> = .Leaf
+    for x in [5, 2, 8, 1, 9] { tree.insert(x) }
+    var sorted: List<Int> = []
+    tree.collect(&sorted)
+    println(sorted)                         // [1, 2, 5, 8, 9]
+
+    // ✗ var anon: Stack<Point> = Stack.new(); anon.dump()
+    //   ошибка: dump есть только при T: Show, а Point его не реализует
+}
+
+struct Point { x: Int, y: Int }

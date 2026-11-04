@@ -1,0 +1,37 @@
+// Пример 09-03. Функции, возвращающие заимствования
+// Проверяет: вывод зависимости результата, аннотацию @borrows для нескольких
+// источников, правило «у метода — от self», запрет висячих заимствований.
+
+fun firstWord(text: str): str =                  // единственный источник — зависимость выводится
+    text.split(' ').first() ?: text
+
+@borrows(a, b)                                   // результат заимствует a или b
+fun longer(a: str, b: str): str = if a.len() >= b.len() { a } else { b }
+
+struct Inventory {
+    items: List<String>
+
+    // У метода результат по умолчанию заимствует self — даже если есть другие параметры.
+    fun find(self, prefix: str): ref String? = self.items.iter().find { it.startsWith(prefix) }
+}
+
+fun main() {
+    val sentence = "владение без сборщика мусора"
+    println(firstWord(sentence))                   // владение
+
+    val x = "короткая"
+    do {
+        val y = String.of("гораздо более длинная")
+        println(longer(x, y))                      // можно: результат используется, пока y жива
+    }
+    // ✗ val kept = do { val y = String.of("длинная строка"); longer(x, y) }
+    //   ошибка: результат может заимствовать `y`, а `y` уничтожается в конце блока
+
+    var inv = Inventory(items = ["болт М6", "гайка М6", "шайба"])
+    if val found = inv.find("гайка") {
+        println(found)
+        // ✗ inv.items.clear()
+        //   ошибка: `found` заимствует inv, а inv изменяется, пока found используется
+    }
+    inv.items.clear()                              // можно: заимствование закончилось
+}

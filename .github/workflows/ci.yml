@@ -1,0 +1,48 @@
+# Проверка каждого pull request и каждого изменения main на Windows, Linux и macOS.
+# Те же команды запускаются локально — см. docs/WORKFLOW.md.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  check:
+    name: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - name: Получить код
+        uses: actions/checkout@v6
+
+      - name: Установить Rust из rust-toolchain.toml
+        run: rustup toolchain install
+
+      - name: Оформление кода Rust
+        run: cargo fmt --all --check
+
+      - name: Clippy
+        run: cargo clippy --workspace --all-targets --locked -- -D warnings
+
+      - name: Проверки (cargo test)
+        run: cargo test --workspace --locked
+
+      - name: Отчёт с метриками (на результат не влияет)
+        if: always()
+        continue-on-error: true
+        run: cargo run --locked --quiet -p kenox-repo-check

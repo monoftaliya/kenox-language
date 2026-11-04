@@ -1,0 +1,54 @@
+// Пример 06-01. Result и try
+// Проверяет: собственный тип ошибки, `try` для передачи ошибки выше с преобразованием,
+// `?:` с return для T?, полное сопоставление ошибок.
+
+import std.fs
+
+enum ConfigError {
+    Io(cause: fs.IoError)
+    MissingKey(key: String)
+    BadNumber(key: String, value: String)
+}
+
+extend ConfigError: From<fs.IoError> {
+    fun from(consume e: fs.IoError): ConfigError = .Io(cause = e)
+}
+
+struct Config {
+    host: String
+    port: Int
+}
+
+fun parseConfig(text: str): Result<Config, ConfigError> {
+    var host: String? = null
+    var port: Int? = null
+    for line in text.lines() {
+        val (key, value) = line.splitOnce('=') ?: continue
+        match key.trim() {
+            "host" -> host = value.trim().toString()
+            "port" -> port = value.trim().toIntOrNull()
+                ?: return Err(.BadNumber(key = "port", value = value.toString()))
+            _ -> {}
+        }
+    }
+    return Ok(Config(
+        host = host ?: return Err(.MissingKey(key = "host")),
+        port = port ?: 8080,
+    ))
+}
+
+fun loadConfig(path: str): Result<Config, ConfigError> {
+    val text = try fs.readText(path)            // IoError → ConfigError через From
+    return parseConfig(text)
+    // ⚠ Р-1: в Rust здесь был бы оператор `?`, но в KENOX `x?.y` уже означает
+    //   безопасный вызов, как в Kotlin; поэтому передача ошибки — слово try
+}
+
+fun main() {
+    match loadConfig("app.conf") {
+        .Ok(cfg) -> println("{cfg.host}:{cfg.port}")
+        .Err(.MissingKey(key)) -> eprintln("в конфигурации нет ключа {key}")
+        .Err(.BadNumber(key, value)) -> eprintln("ключ {key}: «{value}» — не число")
+        .Err(.Io(cause)) -> eprintln("не удалось прочитать файл: {cause}")
+    }
+}

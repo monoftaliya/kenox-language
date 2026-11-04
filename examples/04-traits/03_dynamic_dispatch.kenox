@@ -1,0 +1,55 @@
+// Пример 04-03. Динамическая диспетчеризация
+// Проверяет: разнородную коллекцию Box<dyn Trait>, изменяемый обход,
+// правило совместимости трейта с dyn.
+
+struct Context {
+    files: List<String>
+    dryRun: Bool
+}
+
+trait Command {
+    fun name(self): String
+    fun run(inout self, inout ctx: Context)
+}
+
+struct Touch { path: String }
+struct Remove { path: String }
+
+extend Touch: Command {
+    fun name(self): String = "touch {self.path}"
+    fun run(inout self, inout ctx: Context) {
+        if !ctx.dryRun { ctx.files.push(self.path.clone()) }
+    }
+}
+
+extend Remove: Command {
+    fun name(self): String = "rm {self.path}"
+    fun run(inout self, inout ctx: Context) {
+        if !ctx.dryRun { ctx.files.retain { it != self.path } }
+    }
+}
+
+trait Duplicator {
+    fun duplicate<T: Clone>(self, value: T): (T, T)      // собственный параметр-тип у метода
+}
+
+fun main() {
+    var plan: List<Box<dyn Command>> = [
+        Box(Touch(path = "a.txt")),
+        Box(Touch(path = "b.txt")),
+        Box(Remove(path = "a.txt")),
+    ]
+    // ⚠ Р-9: Box(…) у каждого элемента шумно; в Kotlin это был бы просто List<Command>.
+    //   Зато выделение памяти видно в коде
+
+    var ctx = Context(files = [], dryRun = false)
+    for inout cmd in &plan {
+        println("> {cmd.name()}")
+        cmd.run(&ctx)
+    }
+    println(ctx.files)                                    // [b.txt]
+
+    // ✗ val tools: List<Box<dyn Duplicator>> = []
+    //   ошибка: трейт Duplicator несовместим с dyn — у метода duplicate собственный
+    //   параметр-тип, его нельзя поместить в таблицу виртуальных методов
+}

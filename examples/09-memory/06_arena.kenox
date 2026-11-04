@@ -1,0 +1,35 @@
+// Пример 09-06. Арена и дескрипторы
+// Проверяет: дерево выражений в арене через Id<T>, освобождение арены целиком,
+// проверку чужих и устаревших дескрипторов во время выполнения.
+
+import std.arena.{Arena, Id}
+
+enum Expr {
+    Num(value: Int)
+    Add(left: Id<Expr>, right: Id<Expr>)
+    Mul(left: Id<Expr>, right: Id<Expr>)
+}
+
+fun eval(arena: Arena<Expr>, id: Id<Expr>): Int = match arena[id] {
+    .Num(v) -> v
+    .Add(l, r) -> eval(arena, l) + eval(arena, r)
+    .Mul(l, r) -> eval(arena, l) * eval(arena, r)
+}
+
+fun main() {
+    var arena = Arena<Expr>()
+    // (2 + 3) * 4
+    val two = arena.add(.Num(2))
+    val three = arena.add(.Num(3))
+    val sum = arena.add(.Add(left = two, right = three))
+    val four = arena.add(.Num(4))
+    val product = arena.add(.Mul(left = sum, right = four))
+    println(eval(arena, product))           // 20
+    println("узлов: {arena.len()}")         // 5
+
+    val other = Arena<Expr>()
+    // eval(other, product) — паника во время выполнения: дескриптор принадлежит другой арене.
+    // ⚠ Р-21: принадлежность дескриптора арене проверяется только во время выполнения;
+    //   статическая проверка потребовала бы «брендов», то есть именованных времён жизни (Q-19)
+    println(other.isEmpty())
+}   // все узлы освобождаются одним действием
