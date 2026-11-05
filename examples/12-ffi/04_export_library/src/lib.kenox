@@ -12,7 +12,7 @@ pub struct Counter {
 /// Создаёт счётчик. Владение результатом переходит к вызывающему; освобождать — counter_free.
 @export("counter_new")
 extern "C" fun counterNew(name: RawPtr<CChar>): RawMutPtr<Counter> {
-    if name.isNull() { return RawMutPtr.null() }
+    if name.isNull() { return RawMutPtr.nullPtr() }
     val text = unsafe { CStr.fromPtr(name) }.toStringLossy()
     return Box.intoRaw(Box(Counter(name = text, value = 0)))
 }
