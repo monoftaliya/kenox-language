@@ -313,6 +313,7 @@ val squares = numbers.parIter().map { it * it }.sum()
 - Файл — модуль. Имя модуля — путь файла относительно `src/`: `src/net/http.kenox` → `net.http`.
 - `import std.fs`, `import std.collections.{Map, Set}`, `import model.item.Item`; `pub import` — реэкспорт.
 - Видимость: по умолчанию — внутри пакета; `pub` — публичный API пакета; `private` — только внутри файла.
+- Корневой модуль (`src/main.kenox` или `src/lib.kenox`) модули своего пакета не импортируют. Имена из других модулей — только через импорт: `std.fs.readText(…)` без `import std.fs` не пишется. Без импорта доступны встроенные типы и прелюдия (`String`, `List`, `Result`, `println` и другие). Перегрузки нет; параметр и локальная переменная не повторяют видимое имя; метод трейта вызывается, когда трейт импортирован или входит в прелюдию. Точные правила — [глава 3 спецификации](../spec/03-names.md).
 - `kenox.toml`:
 
 ```toml
@@ -346,7 +347,7 @@ extern "C" fun add(a: CInt, b: CInt): CInt = a + b
 ```
 
 - Вызов `extern`-функции — только в `unsafe`.
-- `RawPtr<T>` (только чтение) и `RawMutPtr<T>` — сырые указатели; `addressOf(x)` и `addressOf(&x)` — получить указатель (в `unsafe`-контексте использования).
+- `RawPtr<T>` (только чтение) и `RawMutPtr<T>` — сырые указатели; `addressOf(x)` и `addressOf(&x)` из `std.mem` — получить указатель (в `unsafe`-контексте использования).
 - Строки: `CString.from(s)`, `CStr.fromPtr(p)`, `withCString(s) { p -> … }`.
 - Функциональный тип в объявлении — `(A) -> B`; результат функции — после `:`.
 

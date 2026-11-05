@@ -3,6 +3,7 @@
 // и по указателю, проверку значения, пришедшего из C.
 
 import std.ffi.{CDouble, CInt}
+import std.mem.addressOf
 
 @repr(C)
 @derive(Copy, Show)

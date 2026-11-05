@@ -3,6 +3,7 @@
 // размеров на границе, запрет раскрутки паники через кадры C.
 
 import std.ffi.{CInt, CSize, CVoid}
+import std.mem.sizeOf
 
 extern "C" {
     fun qsort(

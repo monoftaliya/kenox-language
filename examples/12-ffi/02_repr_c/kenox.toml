@@ -1,7 +1,7 @@
 # Пример 12-02: программа на KENOX вместе с небольшой библиотекой на C
 
 [package]
-name = "repr-c-demo"
+name = "repr_c_demo"
 version = "0.1.0"
 kind = "bin"
 
