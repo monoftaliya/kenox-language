@@ -1,0 +1,6 @@
+# Пример 11-02: библиотека с публичным API
+
+[package]
+name = "textstats"
+version = "0.1.0"
+kind = "lib"

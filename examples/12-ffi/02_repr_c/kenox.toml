@@ -1,0 +1,11 @@
+# Пример 12-02: программа на KENOX вместе с небольшой библиотекой на C
+
+[package]
+name = "repr-c-demo"
+version = "0.1.0"
+kind = "bin"
+
+# Предложение Р-26: C-исходники собираются тем же clang, что и сам KENOX (backend v0)
+[native]
+sources = ["c/geom.c"]
+include = ["c"]

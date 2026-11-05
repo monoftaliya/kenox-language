@@ -1,0 +1,28 @@
+// Пример 01-01. Привязки, вывод типов, константы
+// Проверяет: val и var, явные и выведенные типы, const, блок-выражение do.
+
+const MAX_RETRIES: Int = 3
+const APP_NAME = "kenox-demo"             // тип выводится: String
+
+fun main() {
+    val greeting = "Привет"               // String: литерал хранится статически, без выделения памяти
+    var attempts = 0                      // Int — тип целых по умолчанию
+    val ratio: Float64 = 0.75
+    val enabled = true
+
+    attempts += 1
+    // ✗ greeting = "Пока"
+    //   ошибка: `greeting` объявлена через val и не может быть изменена
+
+    val left = MAX_RETRIES - attempts
+    println("{greeting}! {APP_NAME}: осталось попыток {left}, доля {ratio}, включено {enabled}")
+
+    // Блок-выражение: значение — последняя строка.
+    // ⚠ Р-2: `{ … }` в позиции выражения — это замыкание, поэтому блок пишется как do { … }
+    val area = do {
+        val w = 3
+        val h = 4
+        w * h
+    }
+    println("площадь = {area}")
+}

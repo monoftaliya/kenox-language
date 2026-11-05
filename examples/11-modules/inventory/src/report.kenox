@@ -1,0 +1,11 @@
+// Модуль report (пример 11-01)
+
+import model.stock.Stock
+
+pub fun render(stock: Stock): String {
+    var out = String()
+    for item in stock.all() {
+        out.push("{item.name}: {item.quantity}\n")     // поля видны: тот же пакет
+    }
+    return out
+}

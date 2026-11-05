@@ -1,0 +1,11 @@
+[package]
+name = "kenox-repo-check"
+version = "0.1.0"
+description = "Проверки репозитория KENOX: документы, корпус примеров, C-код примеров"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lints.rust]
+unsafe_code = "forbid"

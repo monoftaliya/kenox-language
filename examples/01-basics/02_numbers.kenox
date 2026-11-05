@@ -1,0 +1,30 @@
+// Пример 01-02. Числа: размеры, переполнение, преобразования
+// Проверяет: целые фиксированной ширины, Int по умолчанию, отсутствие неявных
+// преобразований, ловушку переполнения и явные операции.
+
+fun main() {
+    val big: Int64 = 9_000_000_000
+    val small: Int32 = 70_000
+    val byte: UInt8 = 0xFF
+    val mask = 0b1010_1010                         // Int
+
+    // ✗ val sum = big + small
+    //   ошибка: Int64 и Int32 — разные типы, неявных преобразований нет
+    val sum = big + small.toInt64()                // расширение всегда успешно
+
+    val narrowed: Int32 = small.toInt32()          // сужение: ловушка, если значение не помещается
+    val maybe: Int32? = big.toInt32OrNull()        // null — 9 млрд не помещаются в Int32
+    val low: UInt8 = big.truncateToUInt8()         // явное усечение старших битов
+
+    // Переполнение — ловушка во всех профилях сборки (ADR-0009):
+    // byte + 1 остановит программу, потому что 256 не помещается в UInt8.
+    val wrapped = byte.wrappingAdd(1)              // 0 — заворачивание, когда оно действительно нужно
+    val clamped = byte.saturatingAdd(10)           // 255 — насыщение
+
+    val pi = 3.141_592_653                         // Float64
+    val half: Float32 = 0.5
+    val area = pi * 2.0 * 2.0
+    val rounded: Int = area.round().toInt()        // Float64 → Int — только явно
+
+    println("{sum} {narrowed} {maybe} {low} {wrapped} {clamped} {half} {rounded} {mask}")
+}

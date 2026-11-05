@@ -1,0 +1,30 @@
+// Пример 01-03. Строки и символы
+// Проверяет: String и str, интерполяцию, сырые и многострочные строки,
+// разницу между байтами и символами Unicode.
+
+fun shout(text: str): String = text.toUpperCase() + "!"   // параметр — представление str
+
+fun main() {
+    val city = "Казань"                       // String (литерал — без выделения памяти)
+    var log = String()                        // пустая изменяемая строка
+    log.push("город: ")
+    log.push(city)                            // String передаётся туда, где ждут str, без копирования
+    println(log)
+
+    println(shout(city))                      // КАЗАНЬ!
+    println("байт: {city.byteLen()}, символов: {city.chars().count()}")   // 12 и 6
+
+    val first: Char = city.chars().first().unwrap()       // 'К'
+    val part: str = city.slice(0..<4)                     // «Ка»: границы — в байтах UTF-8
+    // ⚠ Р-5: срез по байтам непривычен после Kotlin, где индексы считаются в единицах UTF-16;
+    //   срез посреди символа — паника, а не повреждённая строка
+    println("{first} / {part}")
+
+    val path = r"C:\Users\anna\{draft}.txt"              // сырая строка: без экранирования и интерполяции
+    val json = """
+        {{"city": "{city}", "ok": true}}
+        """
+    // ⚠ Р-6: в JSON-подобном тексте скобки приходится удваивать; для шаблонов JSON — сырые строки
+    println(path)
+    println(json.trimIndent())
+}

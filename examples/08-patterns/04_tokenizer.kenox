@@ -1,0 +1,73 @@
+// Пример 08-04. Лексер: сопоставление символов и владение текстом
+// Проверяет: match по Char с диапазонами и альтернативами, перечисление токенов,
+// реализацию Iterator, ограничение «поле не может хранить заимствование».
+
+@derive(Show)
+enum Token {
+    Number(value: Int)
+    Ident(name: String)
+    Op(symbol: Char)
+    LParen
+    RParen
+}
+
+struct Lexer {
+    text: String          // владеющая копия входного текста
+    pos: Int              // байтовая позиция
+    // ⚠ Р-18: по исходному правилу хранить в поле str (заимствование входа) было нельзя,
+    //   поэтому текст копируется. После решения по Р-10 (Q-40) поле может быть `str` —
+    //   тогда лексер сам становится невыходящим; пример оставлен в простой форме
+
+    fun new(source: str): Lexer = Lexer(text = source.toString(), pos = 0)
+
+    fun peek(self): Char? = self.text.charAtByte(self.pos)
+
+    fun bump(inout self): Char? {
+        val c = self.peek() ?: return null
+        self.pos += c.utf8Len()
+        return c
+    }
+}
+
+extend Lexer: Iterator {
+    type Item = Token
+
+    fun next(inout self): Token? {
+        while val c = self.peek() {
+            if !c.isWhitespace() { break }
+            self.bump()
+        }
+        val c = self.bump() ?: return null
+        return match c {
+            '0'..='9' -> {                       // в ветке match фигурные скобки — блок
+                var value = c.digitValue()
+                while val d = self.peek() {
+                    if !d.isDigit() { break }
+                    value = value * 10 + d.digitValue()
+                    self.bump()
+                }
+                .Number(value)
+            }
+            'a'..='z' | 'A'..='Z' | '_' -> {
+                var name = String.of(c)
+                while val d = self.peek() {
+                    if !d.isLetterOrDigit() && d != '_' { break }
+                    name.push(d)
+                    self.bump()
+                }
+                .Ident(name)
+            }
+            '+' | '-' | '*' | '/' -> .Op(c)
+            '(' -> .LParen
+            ')' -> .RParen
+            _ -> panic("неожиданный символ «{c}» в позиции {self.pos}")
+        }
+    }
+}
+
+fun main() {
+    for token in Lexer.new("price * (count + 12)") {
+        println(token)
+    }
+    // Ident(price) Op(*) LParen Ident(count) Op(+) Number(12) RParen
+}

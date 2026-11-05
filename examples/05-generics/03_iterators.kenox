@@ -1,0 +1,45 @@
+// Пример 05-03. Итераторы и ассоциированные типы
+// Проверяет: реализацию Iterator для своего типа, ассоциированный тип Item,
+// сокращение Iterator<T>, непрозрачный тип `some`, обобщённый код над итераторами.
+
+// Трейт из std (для справки):
+//   trait Iterator {
+//       type Item
+//       fun next(inout self): Self.Item?
+//   }
+
+struct Fibonacci {
+    a: Int
+    b: Int
+}
+
+extend Fibonacci: Iterator {
+    type Item = Int
+
+    fun next(inout self): Int? {
+        val current = self.a
+        self.a = self.b
+        self.b = current + self.b          // переполнение — ловушка, а не тихий мусор
+        return current
+    }
+}
+
+fun fibonacci(): Fibonacci = Fibonacci(a = 0, b = 1)
+
+fun evenSquares(limit: Int): some Iterator<Int> =      // конкретный тип скрыт
+    (0..<limit).filter { it % 2 == 0 }.map { it * it }
+
+fun sumOf<I: Iterator<Int>>(consume iter: I): Int {    // Iterator<Int> — сокращение для Item = Int
+    var total = 0
+    for x in iter { total += x }
+    return total
+}
+
+fun main() {
+    val first10 = fibonacci().take(10).toList()
+    println(first10)                                    // [0, 1, 1, 2, 3, 5, 8, 13, 21, 34]
+    println(sumOf(evenSquares(10)))                     // 0 + 4 + 16 + 36 + 64 = 120
+    println(sumOf(fibonacci().takeWhile { it < 100 }))  // 232
+    // ⚠ Р-11: без `some` у evenSquares не было бы записываемого типа результата:
+    //   внутри адаптеров — типы замыканий, у которых нет имени
+}

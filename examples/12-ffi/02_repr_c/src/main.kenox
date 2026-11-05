@@ -1,0 +1,41 @@
+// Пример 12-02. Структуры с C-раскладкой
+// Проверяет: @repr(C), C-совместимое перечисление, передачу структуры по значению
+// и по указателю, проверку значения, пришедшего из C.
+
+import std.ffi.{CDouble, CInt}
+
+@repr(C)
+@derive(Copy, Show)
+struct GeomRect {
+    width: CDouble
+    height: CDouble
+}
+
+@repr(Int32)
+enum GeomStatus {
+    Ok = 0
+    Negative = 1
+}
+
+extern "C" {
+    fun geom_area(r: GeomRect): CDouble                    // по значению: правила ABI — забота компилятора
+    fun geom_scale(r: RawMutPtr<GeomRect>, factor: CDouble): CInt
+}
+
+fun main() {
+    var rect = GeomRect(width = 2.0, height = 3.0)
+    println(unsafe { geom_area(rect) })                    // 6.0
+
+    val raw = unsafe { geom_scale(addressOf(&rect), 1.5) }
+    val status = GeomStatus.tryFrom(raw) ?: panic("библиотека вернула неизвестный код {raw}")
+    // ⚠ Р-24: C может вернуть любое целое; если объявить результат сразу как GeomStatus,
+    //   значение вне списка вариантов стало бы неопределённым поведением.
+    //   Правило: из C принимать CInt и проверять (tryFrom)
+    match status {
+        .Ok -> println("после масштабирования: {rect}")   // GeomRect(width = 3.0, height = 4.5)
+        .Negative -> println("отрицательный коэффициент")
+    }
+}
+
+// ✗ extern "C" { fun bad(items: List<Int>) }
+//   ошибка: у List<Int> нет C-раскладки — такой тип нельзя передать через границу C

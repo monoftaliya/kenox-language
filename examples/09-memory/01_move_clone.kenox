@@ -1,0 +1,41 @@
+// Пример 09-01. Перемещение, копирование, клонирование
+// Проверяет: перемещение при присваивании и передаче, Copy-типы, явный clone,
+// явное заимствование ref, частичное перемещение поля, пометку consume.
+
+@derive(Copy, Show)
+struct Rgb { r: UInt8, g: UInt8, b: UInt8 }
+
+@derive(Clone, Show)
+struct Document {
+    title: String
+    body: String
+}
+
+fun archive(consume doc: Document) { println("в архиве: {doc.title}") }
+
+fun main() {
+    val red = Rgb(r = 255, g = 0, b = 0)
+    val alsoRed = red                     // Copy: обе переменные доступны
+    println("{red} {alsoRed}")
+
+    val draft = Document(title = "План", body = "…")
+    val moved = draft                     // перемещение: `draft` больше недоступна
+    // ✗ println(draft.title)
+    //   ошибка: `draft` перемещена в `moved`
+
+    val copy = moved.clone()              // явная копия — стоимость видна в коде
+    archive(moved)                        // владение уходит в функцию
+    println(copy.title)
+
+    val note = Document(title = "Заметка", body = "текст")
+    val alias = ref note                  // явное заимствование в локальной переменной
+    println(alias.body)
+    val title = note.title                // частичное перемещение: забираем только поле
+    println(note.body)                    // другое поле по-прежнему доступно
+    // ✗ archive(note)
+    //   ошибка: поле `note.title` уже перемещено — целиком `note` использовать нельзя
+
+    val temp = Document(title = "черновик", body = "")
+    drop(consume temp)                    // consume — необязательная пометка: видно, что значение уходит
+    println(title)
+}

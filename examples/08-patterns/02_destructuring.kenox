@@ -1,0 +1,46 @@
+// Пример 08-02. Разбор структур, кортежей и вложенных значений
+// Проверяет: образцы для структур и кортежей, разбор в объявлениях и циклах,
+// режим привязок: из своего значения части перемещаются, из заимствованного — заимствуются.
+
+@derive(Copy, Show)
+struct Point { x: Int, y: Int }
+
+@derive(Show)
+enum Message {
+    Move(to: Point)
+    Write(text: String)
+    Batch(items: List<Message>)
+}
+
+fun quadrant(p: Point): String = match p {
+    Point(0, 0) -> "начало координат"
+    Point(x, 0) -> "на оси X ({x})"
+    Point(0, y) -> "на оси Y ({y})"
+    Point(x, y) if x > 0 && y > 0 -> "первая четверть"
+    _ -> "другая четверть"
+}
+
+fun count(m: Message): Int = match m {       // m заимствована — items тоже заимствование
+    .Batch(items) -> items.iter().map { count(it) }.sum()
+    _ -> 1
+}
+
+fun takeText(consume m: Message): String? = match m {    // m своя — text перемещается
+    .Write(text) -> text                                 // без копирования строки
+    _ -> null
+}
+
+fun main() {
+    println(quadrant(Point(x = 3, y = 0)))
+    val pairs = [("a", 1), ("b", 2)]
+    for (name, value) in pairs { println("{name} = {value}") }
+
+    val Point(x, y) = Point(x = 5, y = 7)                // разбор в объявлении
+    println(x + y)
+
+    val msg = Message.Batch(items = [.Write(text = "привет"), .Move(to = Point(x = 1, y = 2))])
+    println(count(msg))                                  // 2
+    println(takeText(.Write(text = "забрать без копии")))
+    // ⚠ Р-17: режим привязок зависит от того, своё значение или заимствованное (как в Rust).
+    //   Это удобно, но неочевидно; правило нужно описать в спецификации и в диагностике
+}

@@ -1,0 +1,49 @@
+// Пример 03-02. Перечисления с данными
+// Проверяет: варианты с полями и без, методы перечислений, точку в начале,
+// перечисление вместо закрытой иерархии классов.
+
+import std.time.Timestamp
+
+enum PaymentMethod {
+    Cash
+    Card(number: String, holder: String)
+    Transfer(iban: String)
+
+    fun fee(self, amount: Int): Int = match self {
+        .Cash -> 0
+        .Card(_, _) -> amount * 2 / 100
+        .Transfer(_) -> 30
+    }
+
+    fun label(self): String = match self {
+        .Cash -> "наличные"
+        .Card(number, _) -> "карта *{number.takeLast(4)}"
+        .Transfer(iban) -> "перевод на {iban}"
+    }
+}
+
+enum Status {
+    Pending
+    Paid(at: Timestamp)
+    Failed(reason: String)
+}
+
+fun main() {
+    val methods: List<PaymentMethod> = [
+        .Cash,
+        .Card(number = "4276123412345678", holder = "ANNA"),
+        .Transfer(iban = "RU0204452560040702810412345678901"),
+    ]
+    for m in methods {
+        println("{m.label()}: комиссия {m.fee(1000)}")
+    }
+
+    var status: Status = .Pending
+    status = .Failed(reason = "нет связи с банком")
+    val text = match status {
+        .Pending -> "ожидает"
+        .Paid(at) -> "оплачено {at}"
+        .Failed(reason) -> "ошибка: {reason}"
+    }
+    println(text)
+}

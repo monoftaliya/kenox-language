@@ -1,0 +1,6 @@
+# Одна версия Rust для всех: локально, в CI и в сессиях Claude (ADR-0027).
+# Обновляется отдельным pull request.
+[toolchain]
+channel = "1.97.0"
+components = ["rustfmt", "clippy"]
+profile = "minimal"

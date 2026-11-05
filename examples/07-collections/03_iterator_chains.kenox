@@ -1,0 +1,40 @@
+// Пример 07-03. Цепочки итераторов и замыкания с заимствованием
+// Проверяет: ленивые адаптеры, захват локальных переменных по заимствованию,
+// сбор в разные коллекции, группировку и разбиение.
+
+@derive(Show)
+struct Sale {
+    city: String
+    amount: Int
+}
+
+fun main() {
+    val sales = [
+        Sale(city = "Казань", amount = 1200),
+        Sale(city = "Пермь", amount = 300),
+        Sale(city = "Казань", amount = 800),
+        Sale(city = "Омск", amount = 1500),
+    ]
+    val threshold = 500
+
+    // Ленивый итератор хранит замыкание, которое заимствует `threshold`.
+    // Поэтому сам итератор — невыходящее значение: его можно держать в локальной
+    // переменной, но нельзя сохранить в поле или вернуть из функции.
+    val big = sales.iter().filter { it.amount >= threshold }
+    // ⚠ Р-10: это работает благодаря «условной невыходящести» (Q-40): адаптер становится
+    //   невыходящим, потому что содержит заимствующее замыкание
+
+    val cities: List<String> = big.map { it.city.clone() }.collect()
+    println(cities)                                       // [Казань, Казань, Омск]
+
+    val total = sales.iter().map { it.amount }.sum()
+    val byCity: Map<String, Int> = sales.iter()
+        .groupBy { it.city.clone() }
+        .mapValues { group -> group.iter().map { it.amount }.sum() }
+    println("всего {total}, по городам {byCity}")
+
+    // partition возвращает два списка заимствований элементов sales —
+    // ещё один случай коллекции заимствований (Р-10).
+    val (rich, poor) = sales.iter().partition { it.amount >= 1000 }
+    println("крупных продаж: {rich.len()}, мелких: {poor.len()}")
+}

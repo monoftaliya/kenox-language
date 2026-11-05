@@ -1,0 +1,30 @@
+// Пример 07-02. Map и Set
+// Проверяет: литералы словаря и множества, изменение значения по ключу,
+// поиск по str без создания String, операции над множествами, оператор in.
+
+fun wordFrequencies(text: str): Map<String, Int> {
+    var counts: Map<String, Int> = [:]
+    for word in text.split(' ') {
+        val w = word.trim().toLowerCase()
+        if w.isEmpty() { continue }
+        counts.update(w, default = 0) { it += 1 }   // `it` — inout: замыкание меняет значение
+    }
+    return counts
+}
+
+fun main() {
+    val freq = wordFrequencies("Кот видит кота и кот спит")
+    for (word, n) in freq.sortedByKey() {
+        println("{word}: {n}")
+    }
+    println(freq.get("кот") ?: 0)                    // 2 — поиск по str, без выделения памяти
+
+    val ages = ["Анна": 31, "Борис": 27]             // Map<String, Int>
+    if val age = ages.get("Анна") { println(age) }
+
+    val backend: Set<String> = ["rust", "go", "kenox"]
+    val frontend: Set<String> = ["ts", "kenox"]
+    println(backend.intersect(frontend))             // {kenox}
+    println(backend.union(frontend).len())           // 4
+    println("go" in backend)                         // true
+}

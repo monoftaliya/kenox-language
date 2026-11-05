@@ -1,0 +1,29 @@
+// Пример 10-01. Чтение и запись файлов
+// Проверяет: чтение целиком, запись и дозапись, байты, обработку отсутствующего
+// файла, пути с разделителями текущей ОС.
+
+import std.fs
+import std.fs.Path
+
+fun main(): Result<Unit, fs.IoError> {
+    val dir = Path.of("out")
+    try fs.createDirAll(dir)
+
+    val report = dir.join("report.txt")          // разделитель пути — по правилам ОС (\ в Windows)
+    try fs.writeText(report, "строка 1\n")
+    try fs.appendText(report, "строка 2\n")
+
+    val text = try fs.readText(report)
+    println("прочитано строк: {text.lines().count()}")
+    print(text)
+
+    val bytes: List<UInt8> = try fs.readBytes(report)
+    println("размер: {bytes.len()} байт")
+
+    match fs.readText(dir.join("нет-такого.txt")) {
+        .Ok(_) -> println("неожиданно нашёлся")
+        .Err(e) if e.kind() == .NotFound -> println("файла нет — это ожидаемо")
+        .Err(e) -> return Err(e)
+    }
+    return Ok()
+}

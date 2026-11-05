@@ -1,0 +1,9 @@
+# Пример 11-01: приложение из нескольких модулей с зависимостью от локальной библиотеки
+
+[package]
+name = "inventory"
+version = "0.1.0"
+kind = "bin"
+
+[dependencies]
+textstats = { path = "../textstats" }

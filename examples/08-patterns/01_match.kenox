@@ -1,0 +1,37 @@
+// Пример 08-01. match: полнота, условия, альтернативы, диапазоны
+// Проверяет: проверку полноты, охранные условия, альтернативы |, диапазоны
+// в образцах, оператор in, match как выражение.
+
+enum Event {
+    Key(code: Int, shift: Bool)
+    Click(x: Int, y: Int)
+    Resize(width: Int, height: Int)
+    Quit
+}
+
+fun handle(e: Event): String = match e {
+    .Key(27, _) -> "Escape"
+    .Key(code, true) if code in 65..=90 -> "заглавная буква"
+    .Key(code, _) if code in 48..=57 -> "цифра"
+    .Key(_, _) -> "другая клавиша"
+    .Click(x, y) if x < 0 || y < 0 -> "щелчок вне окна"
+    .Click(x, y) -> "щелчок в ({x}, {y})"
+    .Resize(0, _) | .Resize(_, 0) -> "окно свёрнуто"
+    .Resize(w, h) -> "новый размер {w}×{h}"
+    .Quit -> "выход"
+}
+
+fun classify(n: Int): String = match n {
+    Int.MIN..=-1 -> "отрицательное"
+    0 -> "ноль"
+    1..=9 -> "цифра"
+    _ -> "большое"
+}
+
+fun main() {
+    val events: List<Event> = [.Key(27, false), .Key(70, true), .Click(10, 20), .Resize(0, 300), .Quit]
+    for e in events { println(handle(e)) }
+    println(classify(-5))
+    // ✗ fun broken(e: Event): String = match e { .Quit -> "выход" }
+    //   ошибка: match не полон — не обработаны варианты Key, Click, Resize
+}

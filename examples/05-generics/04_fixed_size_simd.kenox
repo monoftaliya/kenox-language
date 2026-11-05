@@ -1,0 +1,47 @@
+// Пример 05-04. Массивы фиксированной длины, константные параметры, SIMD
+// Проверяет: Array<T, N>, обобщение по длине, портируемые SIMD-типы,
+// ограничение «без выражений в типах» (ADR-0008).
+
+import std.simd.Simd
+
+fun dot<const N: Int>(a: Array<Float32, N>, b: Array<Float32, N>): Float32 {
+    var sum: Float32 = 0.0
+    for i in 0..<N { sum += a[i] * b[i] }      // длина известна при компиляции — проверки границ исчезают
+    return sum
+}
+
+fun dotSimd(a: Slice<Float32>, b: Slice<Float32>): Float32 {
+    assert(a.len() == b.len(), "длины должны совпадать")
+    var acc = Simd<Float32, 8>.splat(0.0)
+    val chunks = a.len() / 8
+    for c in 0..<chunks {
+        val va = Simd<Float32, 8>.load(a.slice(c * 8..<c * 8 + 8))
+        val vb = Simd<Float32, 8>.load(b.slice(c * 8..<c * 8 + 8))
+        acc = acc + va * vb
+    }
+    var sum = acc.reduceSum()
+    for i in chunks * 8..<a.len() { sum += a[i] * b[i] }    // хвост
+    return sum
+}
+
+struct Matrix<const R: Int, const C: Int> {
+    rows: Array<Array<Float64, C>, R>
+    // ⚠ Р-14: плоское хранилище Array<Float64, R * C> удобнее для вычислений,
+    //   но выражения в типах в 1.0 запрещены — приходится вкладывать массивы
+}
+
+fun main() {
+    val a: Array<Float32, 4> = [1.0, 2.0, 3.0, 4.0]
+    val b: Array<Float32, 4> = [0.5, 0.5, 0.5, 0.5]
+    println(dot(a, b))                                     // 5.0
+    // ✗ val c: Array<Float32, 2> = [1.0, 2.0]
+    // ✗ dot(a, c)
+    //   ошибка: длины 4 и 2 не совпадают — проверяется при компиляции
+
+    val xs: List<Float32> = List.generate(1000) { it.toFloat32() }
+    val ys: List<Float32> = List.generate(1000) { 1.0 }
+    println(dotSimd(xs, ys))                               // 499500.0
+
+    val identity = Matrix<2, 2>(rows = [[1.0, 0.0], [0.0, 1.0]])
+    println(identity.rows[1][1])
+}

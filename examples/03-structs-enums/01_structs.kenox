@@ -1,0 +1,44 @@
+// Пример 03-01. Структуры и методы
+// Проверяет: поля и методы в теле типа, статические функции, обязательный `self.`,
+// поэлементный конструктор, приватные поля и проверяющий конструктор.
+
+@derive(Copy, Show)
+struct Point {
+    x: Float64
+    y: Float64
+
+    fun origin(): Point = Point(x = 0.0, y = 0.0)       // нет self — статическая функция
+
+    fun distanceTo(self, other: Point): Float64 {
+        val dx = self.x - other.x
+        val dy = self.y - other.y
+        return (dx * dx + dy * dy).sqrt()
+    }
+
+    fun moveBy(inout self, dx: Float64, dy: Float64) {
+        self.x += dx
+        self.y += dy
+    }
+}
+
+pub struct Email {
+    private value: String       // поле видно только в этом файле, вместе с ним скрыт и конструктор
+
+    pub fun parse(text: str): Email? =
+        if text.contains("@") { Email(value = text.toString()) } else { null }
+
+    pub fun domain(self): str = self.value.substringAfter("@")   // заимствование из self
+}
+
+fun main() {
+    var p = Point(x = 3.0, y = 4.0)
+    println(p.distanceTo(Point.origin()))       // 5.0
+    p.moveBy(1.0, -1.0)                         // метод с inout self: переменная должна быть var
+    val q = p.with(y = 10.0)                    // копия с изменённым полем
+    println("{p.x} {q.y}")
+
+    val mail = Email.parse("anna@example.org") ?: return
+    println(mail.domain())
+    // В другом файле Email(value = "не почта") — ошибка: поле приватно,
+    // поэтому поэлементный конструктор недоступен и остаётся только Email.parse.
+}

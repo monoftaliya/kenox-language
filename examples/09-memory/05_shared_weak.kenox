@@ -1,0 +1,53 @@
+// Пример 09-05. Разделяемое владение и слабые ссылки
+// Проверяет: LocalShared для одного потока, явный share(), Weak для разрыва
+// циклов, внутреннюю изменяемость через Cell, модель «наблюдатель».
+
+import std.rc.{LocalShared, LocalWeak}
+import std.cell.Cell
+
+struct Model {
+    value: Cell<Int>
+    listeners: Cell<List<LocalWeak<View>>>      // слабые ссылки: модель не держит представления
+
+    fun subscribe(self, view: LocalWeak<View>) {
+        self.listeners.update { it.push(view) }
+    }
+
+    fun set(self, v: Int) {
+        self.value.set(v)
+        val targets = self.listeners.read { it.clone() }   // копия списка: render может снова обратиться к модели
+        for w in targets {
+            if val view = w.upgrade() { view.render() }
+        }
+        self.listeners.update { it.retain { w -> w.isAlive() } }
+    }
+}
+
+struct View {
+    name: String
+    model: LocalShared<Model>                   // сильная ссылка: представление держит модель
+    renders: Cell<Int>
+
+    fun render(self) {
+        self.renders.set(self.renders.get() + 1)
+        println("{self.name}: значение {self.model.value.get()}")
+    }
+}
+
+fun main() {
+    val model = LocalShared(Model(value = Cell(0), listeners = Cell([])))
+    val chart = LocalShared(View(name = "график", model = model.share(), renders = Cell(0)))
+    val table = LocalShared(View(name = "таблица", model = model.share(), renders = Cell(0)))
+    model.subscribe(chart.downgrade())
+    model.subscribe(table.downgrade())
+
+    model.set(42)                               // перерисованы оба
+    drop(table)                                 // таблица закрыта, её слабая ссылка «умерла»
+    model.set(7)                                // перерисован только график
+    println("перерисовок графика: {chart.renders.get()}")   // 2
+
+    // ⚠ Р-20: четыре понятия (LocalShared, LocalWeak, Cell, явный share) там, где в Kotlin —
+    //   обычные ссылки. Если бы модель хранила сильные ссылки на представления, возник бы
+    //   цикл и утечка: компилятор этого не видит — нужен детектор утечек в отладочной сборке.
+    //   Это главный сценарий, ради которого когда-нибудь может понадобиться GC (ADR-0026)
+}

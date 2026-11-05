@@ -1,0 +1,51 @@
+// Пример 04-02. Композиция и делегирование вместо наследования
+// Проверяет: повторное использование кода без наследования реализации —
+// вложенный объект, делегирование `by`, методы по умолчанию как «шаблонный метод».
+
+trait Log {
+    fun write(inout self, line: str)                   // обязательный
+    fun flush(inout self)                              // обязательный
+    fun info(inout self, message: str) { self.write("INFO  {message}") }    // по умолчанию
+    fun error(inout self, message: str) { self.write("ERROR {message}") }   // по умолчанию
+}
+
+struct ConsoleLog {}
+extend ConsoleLog: Log {
+    fun write(inout self, line: str) { println(line) }
+    fun flush(inout self) {}
+}
+
+struct MemoryLog { lines: List<String> }
+extend MemoryLog: Log {
+    fun write(inout self, line: str) { self.lines.push(line.toString()) }
+    fun flush(inout self) { println("строк в памяти: {self.lines.len()}") }
+}
+
+// Нумерует строки; всё остальное умеет вложенный журнал любого типа.
+struct Numbered<L: Log> {
+    inner: L
+    next: Int
+}
+
+extend<L: Log> Numbered<L>: Log by self.inner {
+    fun write(inout self, line: str) {
+        self.next += 1
+        self.inner.write("{self.next}: {line}")
+    }
+    // flush не реализован — пересылается во вложенный журнал (обязательный метод).
+    // info и error не пересылаются: это методы по умолчанию, и они вызывают ЭТОТ write,
+    // поэтому нумерация сохраняется.
+    // ⚠ Р-8: в Kotlin делегирование передало бы info/error во вложенный объект,
+    //   и нумерация бы потерялась; правило KENOX нужно закрепить в спецификации
+}
+
+fun main() {
+    var log = Numbered(inner = MemoryLog(lines = []), next = 0)
+    log.info("старт")
+    log.error("диск заполнен")
+    log.flush()                                         // «строк в памяти: 2» — делегировано
+    for line in log.inner.lines { println(line) }       // 1: INFO  старт / 2: ERROR диск заполнен
+
+    var console = Numbered(inner = ConsoleLog(), next = 100)
+    console.info("тот же код — с другим журналом")      // 101: INFO  …
+}

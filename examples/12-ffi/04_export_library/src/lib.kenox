@@ -1,0 +1,37 @@
+// Пример 12-04. Библиотека для вызова из C
+// Проверяет: @export, непрозрачный дескриптор, передачу владения через границу,
+// коды ошибок вместо паник, документирующие комментарии для генератора заголовка.
+
+import std.ffi.{CChar, CInt, CStr}
+
+pub struct Counter {
+    name: String
+    value: Int64
+}
+
+/// Создаёт счётчик. Владение результатом переходит к вызывающему; освобождать — counter_free.
+@export("counter_new")
+extern "C" fun counterNew(name: RawPtr<CChar>): RawMutPtr<Counter> {
+    if name.isNull() { return RawMutPtr.null() }
+    val text = unsafe { CStr.fromPtr(name) }.toStringLossy()
+    return Box.intoRaw(Box(Counter(name = text, value = 0)))
+}
+
+/// 0 — успех; -1 — передан NULL; -2 — переполнение.
+@export("counter_add")
+extern "C" fun counterAdd(c: RawMutPtr<Counter>, delta: Int64): CInt {
+    inout counter = unsafe { c.asMut() } ?: return -1          // NULL → код ошибки, а не паника
+    counter.value = counter.value.checkedAdd(delta) ?: return -2
+    return 0
+}
+
+/// Текущее значение; для NULL возвращает 0.
+@export("counter_value")
+extern "C" fun counterValue(c: RawPtr<Counter>): Int64 =
+    unsafe { c.asRef() }?.value ?: 0
+
+/// Освобождает счётчик, созданный counter_new. NULL допустим.
+@export("counter_free")
+extern "C" fun counterFree(c: RawMutPtr<Counter>) {
+    if !c.isNull() { drop(unsafe { Box.fromRaw(c) }) }        // владение возвращается в KENOX
+}

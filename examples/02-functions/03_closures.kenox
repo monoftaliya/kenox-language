@@ -1,0 +1,43 @@
+// Пример 02-03. Замыкания и функции высшего порядка
+// Проверяет: trailing-лямбды, `it`, невыходящие замыкания с заимствованием,
+// выходящие замыкания с перемещением захвата, функциональные типы.
+
+fun applyTwice(f: (Int) -> Int, x: Int): Int = f(f(x))     // параметр-функция невыходящий
+
+fun makeCounter(start: Int): escaping () -> Int {
+    var n = start
+    return {
+        n += 1                          // `n` перемещена в замыкание и живёт вместе с ним
+        n
+    }
+}
+
+fun makeGreeter(greeting: String): escaping (str) -> String =
+    { name -> "{greeting}, {name}!" }   // `greeting` переходит во владение замыкания
+
+fun main() {
+    println(applyTwice({ it * 3 }, 2))  // 18
+
+    val prices = [120, 45, 300, 80]
+    var total = 0
+    prices.forEach { total += it }      // невыходящее замыкание заимствует `total` и изменяет её
+    println("итого {total}")
+
+    val expensive = prices.filter { it > 100 }.map { "{it} ₽" }
+    println(expensive)
+
+    val next = makeCounter(10)
+    println(next())                     // 11
+    println(next())                     // 12
+
+    val hello = makeGreeter("Привет")
+    println(hello("мир"))
+
+    var handlers: List<escaping () -> Unit> = []
+    val tag = "сохранение"
+    handlers.push { println("обработчик: {tag}") }
+    // ⚠ Р-7: `tag` молча перемещена в выходящее замыкание; использовать её дальше нельзя
+    // ✗ println(tag)
+    //   ошибка: `tag` перемещена в замыкание, сохранённое в handlers
+    for h in handlers { h() }
+}

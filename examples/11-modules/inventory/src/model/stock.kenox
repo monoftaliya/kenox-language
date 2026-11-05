@@ -1,0 +1,21 @@
+// Модуль model.stock (пример 11-01)
+
+import model.item.Item
+
+pub struct Stock {
+    items: Map<String, Item>
+
+    pub fun new(): Stock = Stock(items = [:])
+
+    pub fun add(inout self, consume item: Item) {
+        self.items.insert(item.name.clone(), item)    // ключ — копия имени, сам товар перемещается
+    }
+
+    pub fun remove(inout self, name: str, amount: Int) {
+        if inout item = self.items.getMut(name) {     // изменяемая распаковка
+            item.adjust(-amount)                      // adjust виден: тот же пакет
+        }
+    }
+
+    pub fun all(self): some Iterator<ref Item> = self.items.values()   // итератор заимствований
+}

@@ -1,0 +1,15 @@
+// Модуль model.item (пример 11-01)
+
+pub struct Item {
+    name: String                        // без модификатора — видно во всём пакете inventory
+    quantity: Int
+    private auditTrail: List<String>    // только внутри этого файла
+
+    pub fun new(name: str, quantity: Int): Item =
+        Item(name = name.toString(), quantity = quantity, auditTrail = ["создан"])
+
+    fun adjust(inout self, delta: Int) {    // видно во всём пакете, но не другим пакетам
+        self.quantity += delta
+        self.auditTrail.push("изменение {delta}")
+    }
+}
