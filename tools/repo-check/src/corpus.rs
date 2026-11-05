@@ -77,35 +77,7 @@ fn lint_source(name: &str, text: &str, problems: &mut Vec<String>) -> [usize; ME
         ));
     }
 
-    let (code_lines, strings) = split_code(text);
-    for (no, line) in code_lines.iter().enumerate() {
-        let chars: Vec<char> = line.chars().collect();
-        let stripped = line.trim();
-        for message in foreign_constructs(&chars) {
-            problems.push(format!("{name}:{}: {message}: {stripped}", no + 1));
-        }
-        if rust_question_mark(&chars) && !is_fun_or_extern(stripped) {
-            problems.push(format!(
-                "{name}:{}: возможен `?` в стиле Rust: {stripped}",
-                no + 1
-            ));
-        }
-        if arrow_return_type(line) {
-            problems.push(format!(
-                "{name}:{}: тип результата функции через -> (нужно :): {stripped}",
-                no + 1
-            ));
-        }
-    }
-    for s in &strings {
-        if kotlin_interpolation(s) {
-            let short: String = s.chars().take(40).collect();
-            problems.push(format!(
-                "{name}: интерполяция в стиле Kotlin ($): \"{short}\""
-            ));
-        }
-    }
-
+    let code_lines = lint_code(name, text, 1, problems);
     let code = code_lines.join("\n");
     [
         code_lines.iter().filter(|l| !l.trim().is_empty()).count(),
@@ -132,6 +104,45 @@ fn lint_source(name: &str, text: &str, problems: &mut Vec<String>) -> [usize; ME
         count_word(&code, "some"),
         keyword_then(&code.chars().collect::<Vec<_>>(), "do", '{'),
     ]
+}
+
+/// Checks KENOX source text for constructs of other languages. `first_line` is
+/// the line number of the text's first line in its file (for code blocks inside
+/// Markdown). Returns the code lines with comments and string bodies removed.
+pub(crate) fn lint_code(
+    name: &str,
+    text: &str,
+    first_line: usize,
+    problems: &mut Vec<String>,
+) -> Vec<String> {
+    let (code_lines, strings) = split_code(text);
+    for (no, line) in code_lines.iter().enumerate() {
+        let line_no = first_line + no;
+        let chars: Vec<char> = line.chars().collect();
+        let stripped = line.trim();
+        for message in foreign_constructs(&chars) {
+            problems.push(format!("{name}:{line_no}: {message}: {stripped}"));
+        }
+        if rust_question_mark(&chars) && !is_fun_or_extern(stripped) {
+            problems.push(format!(
+                "{name}:{line_no}: возможен `?` в стиле Rust: {stripped}"
+            ));
+        }
+        if arrow_return_type(line) {
+            problems.push(format!(
+                "{name}:{line_no}: тип результата функции через -> (нужно :): {stripped}"
+            ));
+        }
+    }
+    for s in &strings {
+        if kotlin_interpolation(s) {
+            let short: String = s.chars().take(40).collect();
+            problems.push(format!(
+                "{name}: интерполяция в стиле Kotlin ($): \"{short}\""
+            ));
+        }
+    }
+    code_lines
 }
 
 /// Messages for constructs of other languages found in one code line.

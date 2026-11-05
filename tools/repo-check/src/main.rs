@@ -3,7 +3,7 @@
 
 use std::process::ExitCode;
 
-use kenox_repo_check::{cexamples, corpus, docs, repo_root};
+use kenox_repo_check::{cexamples, corpus, docs, repo_root, spec};
 
 fn main() -> ExitCode {
     let root = repo_root();
@@ -14,6 +14,14 @@ fn main() -> ExitCode {
     println!(
         "файлов .md: {}; вопросов Q: {}; пунктов Р: {}; примеров в оглавлении: {}",
         summary.files, summary.questions, summary.findings, summary.examples
+    );
+    total += print_problems(&problems);
+
+    println!("\n== Спецификация ==");
+    let (problems, summary) = spec::check_with_summary(&root);
+    println!(
+        "правил: {}; правил грамматики: {}; примеров кода: {}",
+        summary.rules, summary.grammar_rules, summary.examples
     );
     total += print_problems(&problems);
 

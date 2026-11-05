@@ -226,8 +226,13 @@ pub fn check_with_summary(root: &Path) -> (Vec<String>, Summary) {
         })
         .collect();
     let mut mentioned = BTreeSet::new();
+    let spec_dir = root.join("spec");
     for (path, text) in &texts {
-        if path.parent() == Some(docs.as_path()) || path.parent() == Some(adr_dir.as_path()) {
+        let parent = path.parent();
+        if parent == Some(docs.as_path())
+            || parent == Some(adr_dir.as_path())
+            || parent == Some(spec_dir.as_path())
+        {
             mentioned.extend(example_ids_in(text));
         }
     }
