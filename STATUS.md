@@ -9,8 +9,8 @@
 - Аудит архитектуры ([ARCHITECTURE_REVIEW.md](docs/ARCHITECTURE_REVIEW.md)) и рабочая архитектура ([ARCHITECTURE.md](docs/ARCHITECTURE.md)).
 - ADR 0001–0010, 0013, 0025–0027; статусы — в [docs/ADR/README.md](docs/ADR/README.md).
 - Шаг 0.2: эскиз синтаксиса, корпус из 44 примеров и [отчёт](docs/CORPUS_REVIEW.md) — утверждены 05.11.2026 вместе с решениями Q-07, Q-17, Q-39, Q-40.
-- Шаг 0.1: репозиторий, лицензии, [WORKFLOW.md](docs/WORKFLOW.md), CI на Windows, Linux и macOS, инструмент проверки `tools/repo-check` — pull request #1.
-- Шаг 0.3, инкремент 1 (этот pull request): [устройство спецификации](spec/README.md), [глава 1 «Лексика»](spec/01-lexical.md), [ADR-0025](docs/ADR/0025-specification-format.md); `cargo test` проверяет правила и грамматику спецификации.
+- Шаг 0.1: репозиторий, лицензии, [WORKFLOW.md](docs/WORKFLOW.md), CI на Windows, Linux и macOS, инструмент проверки `tools/repo-check` — pull request #1 (слит 05.11.2026).
+- Шаг 0.3, инкремент 1 (этот pull request): [устройство спецификации](spec/README.md), [глава 1 «Лексика»](spec/01-lexical.md), [ADR-0025](docs/ADR/0025-specification-format.md); `cargo test` проверяет правила и грамматику спецификации. Глава и решения Q-42 — Q-45 утверждены 05.11.2026.
 
 ## Дальше — шаг 0.3 по главам
 
@@ -22,7 +22,7 @@
 
 ## Ждёт решения
 
-Q-42 — Q-45 из главы 1 ([OPEN_QUESTIONS.md](docs/OPEN_QUESTIONS.md)): утверждаются слиянием этого pull request.
+Открытых вопросов P0 нет. Вопросы P1 и P2 — в [OPEN_QUESTIONS.md](docs/OPEN_QUESTIONS.md).
 
 ## Известные проблемы
 
