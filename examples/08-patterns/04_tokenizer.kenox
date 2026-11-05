@@ -46,7 +46,7 @@ extend Lexer: Iterator {
                     value = value * 10 + d.digitValue()
                     self.bump()
                 }
-                .Number(value)
+                Token.Number(value)             // строка с `.` продолжила бы предыдущую (Q-45)
             }
             'a'..='z' | 'A'..='Z' | '_' -> {
                 var name = String.of(c)
@@ -55,7 +55,7 @@ extend Lexer: Iterator {
                     name.push(d)
                     self.bump()
                 }
-                .Ident(name)
+                Token.Ident(name)
             }
             '+' | '-' | '*' | '/' -> .Op(c)
             '(' -> .LParen
